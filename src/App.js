@@ -6,8 +6,17 @@ function App() {
   const [file, setFile] = useState(null);
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
-  const API_URL = "https://4ace-35-231-208-113.ngrok-free.app";
+  const [voiceEnabled, setVoiceEnabled] = useState(false); // 🔊 Voice toggle
+  const API_URL = "https://b5b6-34-106-211-160.ngrok-free.app";
 
+  const speakSummary = (text) => {
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 1;
+    synth.speak(utterance);
+    
+  };
   const summarizeTopic = async () => {
     if (!topic) return;
     setLoading(true);
@@ -18,7 +27,9 @@ function App() {
       formData.append("topic", topic);
 
       const response = await axios.post(`${API_URL}/summarize`, formData);
-      setSummary(response.data.summary);
+      const result=response.data.summary;
+      setSummary(result);
+      if (voiceEnabled && result) speakSummary(result);
     } catch (error) {
       console.error("Error summarizing topic:", error);
       setSummary("Error generating summary.");
@@ -38,7 +49,9 @@ function App() {
       const response = await axios.post(`${API_URL}/summarize`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setSummary(response.data.summary);
+      const result = response.data.summary;
+      setSummary(result);
+      if (voiceEnabled && result) speakSummary(result);
     } catch (error) {
       console.error("Error summarizing document:", error);
       setSummary("Error processing document.");
@@ -56,6 +69,12 @@ function App() {
             <div>
               <h2 className="text-xl font-semibold border-b pb-2 mb-2 text-blue-400">Summary:</h2>
               <p className="leading-relaxed text-gray-300 whitespace-pre-line">{summary}</p>
+              <button
+            onClick={() => speakSummary(summary)}
+            className="mt-2 px-3 py-1 bg-purple-500 text-white rounded-md"
+          >
+            🔊 Speak Again
+          </button>
             </div>
           ) : (
             <p className="text-gray-400">Enter a topic or upload a document to generate a summary.</p>
